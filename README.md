@@ -8,11 +8,10 @@ Es ist zudem erforderlich, dass das Prerequisite-Skript mit administrativen Rech
 PowerShell wird in einer aktuellen Version benötigt um den Healtch Check durchführen zu können. Öffnen sie die CMD (mit Adminrechten) den folgenden Befehl starten:
 ```sh
 winget install --id Microsoft.PowerShell --source winget
-```sh
+```
 
-## Aufruf
-Mit PowerShell 7 (mit Adminrechten) den folgenden Befehl starten:
 ### Prerequisite für den Healtch Check prüfen
+Mit PowerShell 7 (mit Adminrechten) den folgenden Befehl starten:
 ```sh
 iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/RalfEs73/ds-healthcheck-prerequisite/main/Prerequisite.ps1'))
 ```
