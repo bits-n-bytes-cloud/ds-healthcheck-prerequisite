@@ -1,5 +1,5 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
-# GDPR HealthCheck Prerequisite
+# GDPR HealthCheck-Prerequisite
 ## Information
 Um den GDPR HealthCheck-Prerequisite erfolgreich auszuführen, müssen bestimmte Voraussetzungen erfüllt sein. Dieses Skript überprüft, ob alle erforderlichen Bedingungen gegeben sind, und installiert bei Bedarf die fehlenden PowerShell-Module automatisch nach.
 Es ist zudem erforderlich, dass das Prerequisite-Skript mit administrativen Rechten auf dem Computer ausgeführt wird. Darüber hinaus müssen bei der Anmeldung am Tenant globale Administratorrechte vorhanden sein.
