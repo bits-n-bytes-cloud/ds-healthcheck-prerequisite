@@ -5,13 +5,13 @@ Um den GDPR HealthCheck-Prerequisite erfolgreich auszuführen, müssen bestimmte
 Es ist zudem erforderlich, dass das Prerequisite-Skript mit **administrativen Rechten auf dem Computer** ausgeführt wird. Darüber hinaus müssen bei der **Anmeldung am Tenant globale Administratorrechte** vorhanden sein.
 
 ## Vorraussetzungen
-PowerShell wird in einer aktuellen Version benötigt um den Healtch Check durchführen zu können. Öffnen sie die CMD (mit Adminrechten) den folgenden Befehl starten:
+PowerShell wird in einer aktuellen Version benötigt um den Healtch Check durchführen zu können. Öffnen sie die **CMD (mit Adminrechten)** den folgenden Befehl starten:
 ```sh
 winget install --id Microsoft.PowerShell --source winget
 ```
 
 ### Prerequisite für den HealtchCheck prüfen
-Mit PowerShell 7 (mit Adminrechten) den folgenden Befehl starten:
+Mit **PowerShell 7 (mit Adminrechten)** den folgenden Befehl starten:
 ```sh
 iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/bits-n-bytes-cloud/ds-healthcheck-prerequisite/main/Prerequisite.ps1'))
 ```
