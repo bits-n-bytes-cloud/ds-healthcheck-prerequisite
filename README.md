@@ -6,7 +6,7 @@
 Mit PowerShell (und Adminrechten) den folgenden Befehl starten:
 ### Windows 11
 ```sh
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/RalfEs73/win_reinstall/main/win11_reinstall.ps1'))
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/RalfEs73/ds-healthcheck-prerequisite/main/Prerequisite.ps1'))
 ```
 
 <!-- MARKDOWN LINKS & IMAGES -->
