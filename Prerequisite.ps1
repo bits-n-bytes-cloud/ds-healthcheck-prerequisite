@@ -30,7 +30,7 @@ if (-not $IsAdmin) {
 
 Write-Host "Überprüfe Vorrausetzungen..."
 Ensure-Module -Name ExchangeOnlineManagement
-# Ensure-Module -Name MicrosoftTeams
+Ensure-Module -Name MicrosoftTeams
 # Ensure-Module -Name Microsoft.Graph
 # Ensure-Module -Name Microsoft.Online.SharePoint.PowerShell 
 Write-Host "Alle erforderlichen Module sind installiert und importiert."
