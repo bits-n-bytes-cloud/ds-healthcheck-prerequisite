@@ -13,7 +13,7 @@ winget install --id Microsoft.PowerShell --source winget
 ### Prerequisite für den Healtch Check prüfen
 Mit PowerShell 7 (mit Adminrechten) den folgenden Befehl starten:
 ```sh
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/RalfEs73/ds-healthcheck-prerequisite/main/Prerequisite.ps1'))
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.combits-n-bytes-cloud/ds-healthcheck-prerequisite/main/Prerequisite.ps1'))
 ```
 
 <!-- MARKDOWN LINKS & IMAGES -->
