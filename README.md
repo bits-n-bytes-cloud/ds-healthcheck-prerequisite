@@ -10,7 +10,7 @@ PowerShell wird in einer aktuellen Version benötigt um den Healtch Check durchf
 winget install --id Microsoft.PowerShell --source winget
 ```
 
-### Prerequisite für den Healtch Check prüfen
+### Prerequisite für den HealtchCheck prüfen
 Mit PowerShell 7 (mit Adminrechten) den folgenden Befehl starten:
 ```sh
 iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/bits-n-bytes-cloud/ds-healthcheck-prerequisite/main/Prerequisite.ps1'))
