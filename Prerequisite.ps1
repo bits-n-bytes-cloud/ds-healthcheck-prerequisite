@@ -8,7 +8,7 @@ function Ensure-Module {
   if (-not (Get-Module -ListAvailable -Name $Name)) {
     try {
       Write-Host "Installiere Modul $Name..." -ForegroundColor DarkCyan
-      Install-Module $Name -Scope AllUsers -Force -Confirm:$false -AllowClobber -ErrorAction Stop
+      Install-Module $Name -Scope AllUsers -Confirm:$false -AllowClobber -ErrorAction Stop
     } catch {
       throw "Konnte Modul $Name nicht installieren: $($_.Exception.Message)"
     }
