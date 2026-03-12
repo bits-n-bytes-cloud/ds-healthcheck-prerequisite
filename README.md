@@ -29,12 +29,7 @@ Aus diesem Grund erscheinen mehrere Anmeldefenster während der Ausführung.
 Nach Abschluss aller Prüfungen wird das Testergebnis automatisch an unsere Server übermittelt.
 Im Rahmen dieser Übermittlung werden ausschließlich die folgenden Informationen übertragen:
 
-Ergebnis der technischen Prüfungen (z. B. erfolgreich / fehlgeschlagen)
-Tenant‑ID
-Tenant‑Name
-Angemeldeter Benutzer (E‑Mail/UPN)
-Zeitstempel
-Hostname
+Ergebnis der technischen Prüfungen (z. B. erfolgreich / fehlgeschlagen), Tenant‑ID, Tenant‑Name, Angemeldeter Benutzer (E‑Mail/UPN), Zeitstempel, Hostname
 
 Beispiel:
 
