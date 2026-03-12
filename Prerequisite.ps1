@@ -226,7 +226,6 @@ $json = $payloadObj | ConvertTo-Json -Depth 6 -Compress
 
 # ---------------------- POST an n8n Webhook ----------------------
 
-Write-Host "Sende Ergebnis als JSON per POST an n8n Webhook..." -ForegroundColor Cyan
 
 try {
     $resp = Invoke-RestMethod `
@@ -237,10 +236,9 @@ try {
         -TimeoutSec 30 `
         -ErrorAction Stop
 
-    Write-Host "n8n Webhook erfolgreich aufgerufen." -ForegroundColor Green
 }
 catch {
-    Write-Host "n8n Webhook FEHLGESCHLAGEN (ExitCode 40)" -ForegroundColor Red
+    Write-Host "Senden FEHLGESCHLAGEN (ExitCode 40)" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor DarkRed
     exit 40
 }
