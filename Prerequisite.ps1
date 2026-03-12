@@ -2,6 +2,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# ---------------------- Konfiguration ----------------------
+
+$N8NWebhookUrl = "https://n8n.ralfes.cloud/webhook/813ecb39-84d3-483b-adbc-0db9ae84597e"
+
 # ---------------------- Hilfsfunktionen ----------------------
 
 function Test-IsAdmin {
@@ -150,44 +154,96 @@ if ($teamsResult.ExitCode -ne 0) {
 
 Write-Host "Microsoft Teams Verbindung erfolgreich." -ForegroundColor Green
 
-# ---------------------- Tenant Infos via Microsoft Graph (Option 1: Interactive) ----------------------
+# ---------------------- Microsoft Graph (Interactive Login) ----------------------
 
 Write-Host "Lese Tenant-ID, Firmenname und angemeldeten Benutzer via Microsoft Graph (Interactive Login)..." -ForegroundColor Cyan
+
+# Variablen für Payload
+$tenantId      = $null
+$tenantName    = $null
+$signedInUser  = $null
 
 try {
     Import-Module Microsoft.Graph -ErrorAction Stop
 
+    # Optional: alte Kontexte entfernen (robuster bei wiederholten Runs)
     Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
     try { Remove-MgGraphContext -Scope Process -ErrorAction SilentlyContinue | Out-Null } catch {}
 
+    # Interaktives Login (Option 1) mit Scope
+    # Unterstützt u.a. -Scopes, -ContextScope, -ClientTimeout und -WarningAction. [1](https://dominiquehermans.com/2023/10/29/introduction-to-the-microsoft-graph-mggraph-powershell-module-api/)
     Connect-MgGraph `
         -Scopes "Organization.Read.All" `
         -ContextScope Process `
         -ClientTimeout 120 `
         -NoWelcome `
         -WarningAction SilentlyContinue `
-        -ErrorAction Stop | Out-Null
+        -ErrorAction Stop | Out-Null  # [1](https://dominiquehermans.com/2023/10/29/introduction-to-the-microsoft-graph-mggraph-powershell-module-api/)
 
-    # Aktueller Graph-Context (liefert UPN/E-Mail)
+    # Angemeldeter User (UPN/E-Mail) aus dem MgContext
     $ctx = Get-MgContext
-    $loggedInUser = $ctx.Account
+    $signedInUser = $ctx.Account
 
-    # Tenant Infos
-    $org = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1
+    # Tenant Infos auslesen (Id + DisplayName) [2](https://www.youtube.com/watch?v=_V7E48Ggdrs)
+    $org = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1  # [2](https://www.youtube.com/watch?v=_V7E48Ggdrs)
+    $tenantId   = $org.Id
+    $tenantName = $org.DisplayName
 
     Write-Host "Tenant-Informationen erfolgreich ermittelt:" -ForegroundColor Green
-    Write-Host "  TENANT_ID=$($org.Id)" -ForegroundColor Green
-    Write-Host "  TENANT_NAME=$($org.DisplayName)" -ForegroundColor Green
-    Write-Host "  SIGNED_IN_USER=$loggedInUser" -ForegroundColor Green
+    Write-Host "  TENANT_ID=$tenantId" -ForegroundColor Green
+    Write-Host "  TENANT_NAME=$tenantName" -ForegroundColor Green
+    Write-Host "  SIGNED_IN_USER=$signedInUser" -ForegroundColor Green
 
     Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
 }
 catch {
-    Write-Host "Tenant-Info Abfrage FEHLGESCHLAGEN (ExitCode 30)" -ForegroundColor Red
+    Write-Host "Graph Abfrage FEHLGESCHLAGEN (ExitCode 30)" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor DarkRed
     exit 30
 }
 
+# ---------------------- JSON Payload bauen ----------------------
+
+$overallOk = ($exoResult.ExitCode -eq 0) -and ($teamsResult.ExitCode -eq 0)
+
+$payloadObj = [pscustomobject]@{
+    timestamp = (Get-Date).ToString("o")
+    hostname  = $env:COMPUTERNAME
+    results   = @{
+        exchangeOnline = if ($exoResult.ExitCode -eq 0) { "OK" } else { "FAIL" }
+        teams          = if ($teamsResult.ExitCode -eq 0) { "OK" } else { "FAIL" }
+        graph          = "OK"
+        overall        = if ($overallOk) { "OK" } else { "FAIL" }
+    }
+    tenant    = @{
+        tenantId     = $tenantId
+        tenantName   = $tenantName
+        signedInUser = $signedInUser
+    }
+}
+
+$json = $payloadObj | ConvertTo-Json -Depth 6 -Compress
+
+# ---------------------- POST an n8n Webhook ----------------------
+
+Write-Host "Sende Ergebnis als JSON per POST an n8n Webhook..." -ForegroundColor Cyan
+
+try {
+    $resp = Invoke-RestMethod `
+        -Method Post `
+        -Uri $N8NWebhookUrl `
+        -ContentType "application/json" `
+        -Body $json `
+        -TimeoutSec 30 `
+        -ErrorAction Stop
+
+    Write-Host "n8n Webhook erfolgreich aufgerufen." -ForegroundColor Green
+}
+catch {
+    Write-Host "n8n Webhook FEHLGESCHLAGEN (ExitCode 40)" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor DarkRed
+    exit 40
+}
 
 # ---------------------- Fertig ----------------------
 
