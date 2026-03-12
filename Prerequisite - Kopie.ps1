@@ -32,12 +32,15 @@ function Invoke-CleanPwsh {
         [Parameter(Mandatory)][scriptblock] $ScriptBlock
     )
 
+    # ScriptBlock als EncodedCommand starten (Unicode/Base64)
     $encodedCommand = [Convert]::ToBase64String(
         [Text.Encoding]::Unicode.GetBytes($ScriptBlock.ToString())
     )
 
+    # Aktueller pwsh-Pfad (sicherer als "pwsh" im PATH)
     $pwshPath = (Get-Process -Id $PID).Path
 
+    # Output-Dateien anlegen
     $stdoutFile = [IO.Path]::GetTempFileName()
     $stderrFile = [IO.Path]::GetTempFileName()
 
@@ -79,52 +82,11 @@ if (-not (Test-IsAdmin)) {
 
 Write-Host "Überprüfe Voraussetzungen..." -ForegroundColor Cyan
 
+# MinVersion optional anpassen (oder weglassen)
 Ensure-Module -Name ExchangeOnlineManagement -MinVersion '3.6.0'
 Ensure-Module -Name MicrosoftTeams          -MinVersion '5.0.0'
-Ensure-Module -Name Microsoft.Graph         -MinVersion '2.0.0'
 
 Write-Host "Alle Module vorhanden." -ForegroundColor Green
-
-# ---------------------- Microsoft Graph (Device Code) - ZUERST! ----------------------
-
-Write-Host "Lese Tenant-ID und Firmenname via Microsoft Graph (Device Code Login)..." -ForegroundColor Cyan
-
-try {
-    Import-Module Microsoft.Graph -ErrorAction Stop
-
-    # Streams sichtbar machen (damit der Device-Code Prompt sicher angezeigt wird)
-    $InformationPreference = 'Continue'
-    $VerbosePreference     = 'SilentlyContinue'
-    $ProgressPreference    = 'Continue'
-
-    # Clean state im Prozess (optional aber robust)
-    Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
-    try { Remove-MgGraphContext -Scope Process -ErrorAction SilentlyContinue | Out-Null } catch {}
-
-    # Device Code Flow + Timeout
-    # -UseDeviceCode und -ClientTimeout sind offiziell unterstützt. [1](https://dominiquehermans.com/2023/10/29/introduction-to-the-microsoft-graph-mggraph-powershell-module-api/)
-    Connect-MgGraph `
-        -UseDeviceCode `
-        -Scopes "Organization.Read.All" `
-        -ContextScope Process `
-        -ClientTimeout 120 `
-        -NoWelcome `
-        -ErrorAction Stop | Out-Null  # [1](https://dominiquehermans.com/2023/10/29/introduction-to-the-microsoft-graph-mggraph-powershell-module-api/)
-
-    # Organisation lesen: Id (TenantId) und DisplayName (Firmenname) kommen aus Get-MgOrganization. [2](https://www.youtube.com/watch?v=_V7E48Ggdrs)
-    $org = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1  # [2](https://www.youtube.com/watch?v=_V7E48Ggdrs)
-
-    Write-Host "Tenant-Informationen erfolgreich ermittelt:" -ForegroundColor Green
-    Write-Host "  TENANT_ID=$($org.Id)" -ForegroundColor Green
-    Write-Host "  TENANT_NAME=$($org.DisplayName)" -ForegroundColor Green
-
-    Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
-}
-catch {
-    Write-Host "Tenant-Info Abfrage FEHLGESCHLAGEN (ExitCode 30)" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor DarkRed
-    exit 30
-}
 
 # ---------------------- Exchange Online (Clean Session) ----------------------
 
@@ -139,6 +101,7 @@ $exoResult = Invoke-CleanPwsh {
     try {
         Connect-ExchangeOnline -ShowBanner:$false -ErrorAction Stop | Out-Null
         "EXO_CONNECTED"
+        # Optional sauber trennen:
         Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
         exit 0
     }
@@ -170,6 +133,7 @@ $teamsResult = Invoke-CleanPwsh {
     try {
         Connect-MicrosoftTeams -ErrorAction Stop | Out-Null
         "TEAMS_CONNECTED"
+        # Optional sauber trennen:
         Disconnect-MicrosoftTeams -ErrorAction SilentlyContinue | Out-Null
         exit 0
     }
