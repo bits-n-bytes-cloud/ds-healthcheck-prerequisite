@@ -24,6 +24,7 @@ Es überprüft, ob alle für den DS HealthCheck benötigten PowerShell‑Module 
 Anschließend meldet sich das Skript bei den benötigten Microsoft‑Diensten an (z. B. Exchange Online, Microsoft Teams, Microsoft Graph).
 
 Aus diesem Grund erscheinen mehrere Anmeldefenster während der Ausführung.
+
 ⚠️ **Wichtig**: Bitte melden Sie sich jedes Mal mit denselben Zugangsdaten an (dem gleichen Benutzerkonto), da die Ergebnisse sonst nicht korrekt zugeordnet werden können.
 Nach Abschluss aller Prüfungen wird das Testergebnis automatisch an unsere Server übermittelt.
 Im Rahmen dieser Übermittlung werden ausschließlich die folgenden Informationen übertragen:
