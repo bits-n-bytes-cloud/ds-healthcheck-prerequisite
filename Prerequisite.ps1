@@ -156,7 +156,7 @@ Write-Host "Microsoft Teams Verbindung erfolgreich." -ForegroundColor Green
 
 # ---------------------- Microsoft Graph (Interactive Login) ----------------------
 
-Write-Host "Lese Tenant-ID, Firmenname und angemeldeten Benutzer via Microsoft Graph (Interactive Login)..." -ForegroundColor Cyan
+Write-Host "Lese Tenant-ID, Firmenname und angemeldeten Benutzer via Microsoft Graph (Interactive Login), das kann mehere Minuten dauern..." -ForegroundColor Cyan
 
 # Variablen für Payload
 $tenantId      = $null
