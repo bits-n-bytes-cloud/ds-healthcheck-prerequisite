@@ -265,11 +265,10 @@ try {
         -ErrorAction Stop
 }
 catch {
-    Write-Host "Senden an n8n fehlgeschlagen: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Senden an bits-n-bytes fehlgeschlagen: $($_.Exception.Message)" -ForegroundColor Red
     exit 40
 }
 
 # ---------------------- Fertig ----------------------
 
 Write-Host "Alle Verbindungen erfolgreich hergestellt." -ForegroundColor Cyan
-exit 0
