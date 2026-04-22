@@ -27,7 +27,30 @@ function Ensure-Module {
 
     if (-not $installed -or $installed.Version -lt $MinVersion) {
         Write-Host "Installiere/Aktualisiere $Name (min. $MinVersion)..." -ForegroundColor DarkCyan
-        Install-Module $Name -Scope AllUsers -Force -AllowClobber -ErrorAction Stop
+        try {
+            # Versuche Installation mit verschiedenen Parametern
+            $installParams = @{
+                Name = $Name
+                Scope = "AllUsers"
+                Force = $true
+                AllowClobber = $true
+                SkipPublisherCheck = $true
+                ErrorAction = "Stop"
+            }
+            
+            # Wenn es ein Problem mit PackageManagement gibt, versuche es mit -Quiet
+            Install-Module @installParams -Quiet
+        }
+        catch {
+            # Wenn das erste Mal fehlschlägt, versuche es erneut
+            try {
+                Install-Module $Name -Scope AllUsers -Force -AllowClobber -ErrorAction Stop
+            }
+            catch {
+                Write-Error "Installation von Modul $Name fehlgeschlagen: $($_.Exception.Message)"
+                exit 100
+            }
+        }
     }
 }
 
@@ -42,7 +65,7 @@ function Invoke-CleanPwsh {
     )
 
     # Aktueller pwsh-Pfad (sicherer als "pwsh" im PATH)
-    $pwshPath = (Get-Process -Id $PID).Path
+    $pwshPath = (Get-Command pwsh).Path
 
     # Output-Dateien anlegen
     $stdoutFile = [IO.Path]::GetTempFileName()
@@ -82,6 +105,13 @@ if (-not (Test-IsAdmin)) {
     exit 1
 }
 
+# ---------------------- PowerShell Version Check ----------------------
+
+if ($PSVersionTable.PSVersion -lt [Version]'7.5') {
+    Write-Error "PowerShell Version 7.5 oder höher erforderlich."
+    exit 101
+}
+
 # ---------------------- Modul-Voraussetzungen ----------------------
 
 Write-Host "Überprüfe Voraussetzungen..." -ForegroundColor Cyan
@@ -103,9 +133,9 @@ $exoResult = Invoke-CleanPwsh {
     Import-Module ExchangeOnlineManagement -ErrorAction Stop
 
     try {
-        Connect-ExchangeOnline -ShowBanner:$false -ErrorAction Stop | Out-Null
+        Connect-ExchangeOnline -ShowBanner:$false -ErrorAction Stop
         "EXO_CONNECTED"
-        Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+        Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
         exit 0
     }
     catch {
@@ -134,9 +164,9 @@ $teamsResult = Invoke-CleanPwsh {
     Import-Module MicrosoftTeams -ErrorAction Stop
 
     try {
-        Connect-MicrosoftTeams -ErrorAction Stop | Out-Null
+        Connect-MicrosoftTeams -ErrorAction Stop
         "TEAMS_CONNECTED"
-        Disconnect-MicrosoftTeams -ErrorAction SilentlyContinue | Out-Null
+        Disconnect-MicrosoftTeams -ErrorAction SilentlyContinue
         exit 0
     }
     catch {
@@ -156,7 +186,7 @@ Write-Host "Microsoft Teams Verbindung erfolgreich." -ForegroundColor Green
 
 # ---------------------- Microsoft Graph (Interactive Login) ----------------------
 
-Write-Host "Lese Tenant-ID, Firmenname und angemeldeten Benutzer via Microsoft Graph (Interactive Login), das kann mehere Minuten dauern..." -ForegroundColor Cyan
+Write-Host "Lese Tenant-ID, Firmenname und angemeldeten Benutzer via Microsoft Graph (Interactive Login), das kann mehrere Minuten dauern..." -ForegroundColor Cyan
 
 # Variablen für Payload
 $tenantId      = $null
@@ -167,25 +197,24 @@ try {
     Import-Module Microsoft.Graph -ErrorAction Stop
 
     # Optional: alte Kontexte entfernen (robuster bei wiederholten Runs)
-    Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
-    try { Remove-MgGraphContext -Scope Process -ErrorAction SilentlyContinue | Out-Null } catch {}
+    Disconnect-MgGraph -ErrorAction SilentlyContinue
+    try { Remove-MgGraphContext -Scope Process -ErrorAction SilentlyContinue } catch {}
 
     # Interaktives Login (Option 1) mit Scope
-    # Unterstützt u.a. -Scopes, -ContextScope, -ClientTimeout und -WarningAction. [1](https://dominiquehermans.com/2023/10/29/introduction-to-the-microsoft-graph-mggraph-powershell-module-api/)
     Connect-MgGraph `
         -Scopes "Organization.Read.All" `
         -ContextScope Process `
         -ClientTimeout 120 `
         -NoWelcome `
         -WarningAction SilentlyContinue `
-        -ErrorAction Stop | Out-Null  # [1](https://dominiquehermans.com/2023/10/29/introduction-to-the-microsoft-graph-mggraph-powershell-module-api/)
+        -ErrorAction Stop
 
     # Angemeldeter User (UPN/E-Mail) aus dem MgContext
     $ctx = Get-MgContext
     $signedInUser = $ctx.Account
 
-    # Tenant Infos auslesen (Id + DisplayName) [2](https://www.youtube.com/watch?v=_V7E48Ggdrs)
-    $org = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1  # [2](https://www.youtube.com/watch?v=_V7E48Ggdrs)
+    # Tenant Infos auslesen (Id + DisplayName)
+    $org = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1
     $tenantId   = $org.Id
     $tenantName = $org.DisplayName
 
@@ -194,7 +223,7 @@ try {
     Write-Host "  TENANT_NAME=$tenantName" -ForegroundColor Green
     Write-Host "  SIGNED_IN_USER=$signedInUser" -ForegroundColor Green
 
-    Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
+    Disconnect-MgGraph -ErrorAction SilentlyContinue
 }
 catch {
     Write-Host "Graph Abfrage FEHLGESCHLAGEN (ExitCode 30)" -ForegroundColor Red
@@ -226,7 +255,6 @@ $json = $payloadObj | ConvertTo-Json -Depth 6 -Compress
 
 # ---------------------- POST an n8n Webhook ----------------------
 
-
 try {
     $resp = Invoke-RestMethod `
         -Method Post `
@@ -235,11 +263,9 @@ try {
         -Body $json `
         -TimeoutSec 30 `
         -ErrorAction Stop
-
 }
 catch {
-    Write-Host "Senden FEHLGESCHLAGEN (ExitCode 40)" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor DarkRed
+    Write-Host "Senden an n8n fehlgeschlagen: $($_.Exception.Message)" -ForegroundColor Red
     exit 40
 }
 
