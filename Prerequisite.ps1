@@ -59,7 +59,7 @@ $main = {
 
     $config = @{
         ScriptVersion = '2.0.0'
-        WebhookUrl    = 'https://n8n.ralfes.cloud/webhook/813ecb39-84d3-483b-adbc-0db9ae84597e'
+        WebhookUrl    = 'https://n8n.ralfes.cloud/webhook/e40c57b8-c12b-4157-a141-82538bc9d3d4'
         MinPowerShell = [version]'7.5'
         Modules       = @(
             @{ Name = 'ExchangeOnlineManagement';                  MinVersion = [version]'3.6.0' }
